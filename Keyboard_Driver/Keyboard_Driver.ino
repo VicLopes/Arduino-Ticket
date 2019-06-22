@@ -105,7 +105,7 @@ void KbdRptParser::OnKeyPressed(uint8_t key)
 };
 
 void SendQR(){ // Sends QR code string to other Arduino
-  Serial.write(qrcode, 36); // Emits serial data of up to 36 bytes
+  Serial.write(qrcode, 36); // Emits serial data of up to 36 bytes, locks program until it is sent
   delay(1000);
   qrcode[36] = '0';
 }
@@ -119,9 +119,6 @@ KbdRptParser Prs;
 void setup()
 {
   Serial.begin( 115200 );
-#if !defined(__MIPSEL__)
-  while (!Serial); // Wait for serial port to connect - used on Leonardo, Teensy and other boards with built-in USB CDC serial connection
-#endif
   Serial.println("Start");
 
   if (Usb.Init() == -1)

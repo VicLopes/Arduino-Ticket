@@ -1,10 +1,10 @@
 #include <EtherCard.h>
 
-//Define o MAC da placa de rede. Deve ser único na LAN
+// Defines ENC28J60 MAC address. Must be unique on LAN.
 static uint8_t mymac[6] = {0x54, 0x55, 0x58, 0x10, 0x00, 0x24};
 
-/* CASO PRECISE DE IP ESTÁTICO:
-
+/* In case of static IP
+ *  
 const static uint8_t ip[] = {192,168,0,100}; IP
 const static uint8_t gw[] = {192,168,0,1}; Gateway
 const static uint8_t dns[] = {192,168,0,130}; DNS
@@ -40,15 +40,16 @@ static void httpost () {
   session = ether.tcpSend();
 }
 
-char* obterqr() {
+char obterqr() {
   Serial.readBytes(qrcode, 36);
+  Serial.print("Leitura completa do código: ");
+  Serial.println(qrcode);
   delay(1000);
 }
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(57600);
-  //
+  Serial.begin(57600);/
   if (ether.begin(sizeof Ethernet::buffer, mymac) == 0)
     Serial.println(F("Failed to access Ethernet controller"));
   if (!ether.dhcpSetup())
@@ -66,7 +67,7 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  
+  obterqr();
+  httpost();
 }
 
