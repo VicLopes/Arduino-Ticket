@@ -9,10 +9,6 @@
 #include <EtherCard.h>
 #include <ArduinoJson.h>
 
-// change these settings to match your own setup
-#define FEED "000"
-#define APIKEY "xxx"
-
 // ethernet interface mac address, must be unique on the LAN
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
@@ -43,7 +39,6 @@ void setup () {
   initialize_ethernet();
 }
 
-
 void loop () {
 
   //if correct answer is not received then re-initialize ethernet module
@@ -56,15 +51,14 @@ void loop () {
   ether.packetLoop(ether.packetReceive());
 
   //200 res = 10 seconds (50ms each res)
-  if (res == 200) {
+  if (res == 50) {
     StaticJsonDocument<61> doc;
     obterqr();
     doc["qr_code"].set(qrcode);
     Serial.print("Sending QR code:");
     Serial.println(qrcode);
     byte sd = stash.create();
-    stash.print("qr_code=");
-    stash.println(qrcode);
+    serializeJsonPretty(doc, stash);
     stash.save();
     int stash_size = stash.size();
     
@@ -74,7 +68,7 @@ void loop () {
                         "Host: $F" "\r\n"
                         "User-Agent: Arduino/1.0" "\r\n"
                         "Content-Length: $D" "\r\n"
-                        "Content-Type: application/x-www-form-urlencoded" "\r\n"
+                        "Content-Type: application/json" "\r\n"
                         "\r\n"
                         "$H"),
                         website, stash_size, sd);
@@ -90,7 +84,15 @@ void loop () {
    const char* reply = ether.tcpReply(session);
    if (reply != 0) {
      res = 0;
-     Serial.println(reply);
+     if(reply[9] == '2'){
+      Serial.println("Ticket válido.");
+     }
+     
+     else if (reply[9] == '4'){
+      Serial.println("Ticket usado ou não existente.");
+     }
+     else
+      Serial.println("Algo deu errado!");
    }
    delay(50);
 }
@@ -99,14 +101,8 @@ void loop () {
 
 void initialize_ethernet(void){
   for(;;){ // keep trying until you succeed
-    //Reinitialize ethernet module
-    pinMode(5, OUTPUT);
     Serial.println("Reseting Ethernet...");
-    digitalWrite(5, LOW);
-    delay(1000);
-    digitalWrite(5, HIGH);
-    delay(500);
-
+    
     // Change 'SS' to your Slave Select pin, if you arn't using the default pin
     if (ether.begin(sizeof Ethernet::buffer, mymac, SS) == 0){
       Serial.println( "Failed to access Ethernet controller");
@@ -126,7 +122,6 @@ void initialize_ethernet(void){
       Serial.println("DNS failed");
 
     ether.printIp("SRV: ", ether.hisip);
-
     //reset init value
     res = 0;
     break;
